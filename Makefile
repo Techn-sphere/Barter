@@ -9,3 +9,6 @@ migrate:
 
 reverse-migrate:
 	alembic downgrade -$(q)
+
+updatePEP:
+	ruff format .
