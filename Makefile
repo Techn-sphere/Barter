@@ -6,3 +6,6 @@ migrations:
 
 migrate:
 	alembic upgrade head
+
+reverse-migrate:
+	alembic downgrade -$(q)
