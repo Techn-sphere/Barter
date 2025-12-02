@@ -11,4 +11,4 @@ class User(IDMixin, TimestampsMixin, Base):
     hashed_password: Mapped[str] = mapped_column(Text, unique=False, nullable=False)
     is_active: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_superuser: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
-    is_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_email_verified: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)

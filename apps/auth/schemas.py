@@ -23,7 +23,7 @@ class CreateUser(GetUserByEmail):
 
 class UserReturnData(GetUserByID, GetUserByEmail):
     is_active: bool
-    is_verified: bool
+    is_email_verified: bool
     is_superuser: bool
     created_at: datetime.datetime
     updated_at: datetime.datetime

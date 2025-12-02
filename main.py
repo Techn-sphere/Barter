@@ -1,9 +1,22 @@
-import uvicorn
+import logging
 
 from fastapi import FastAPI
+from apps.core_dependency.redis_dependency import RedisDependency
+from contextlib import asynccontextmanager
 
-app = FastAPI()
+from apps.auth.router import router as auth_router
 
+redis_dependency = RedisDependency()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    yield
+    await redis_dependency.close()
+
+app = FastAPI(lifespan=lifespan)
+app.include_router(auth_router)
+
+logging.basicConfig(level=logging.DEBUG)
 
 @app.get("/")
 async def index():
