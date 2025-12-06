@@ -34,7 +34,7 @@ class UserManager:
             try:
                 result = await session.execute(query)
             except IntegrityError:
-                raise HTTPException(status_code=400, detail="User already exists.")
+                raise ValueError("Пользователь уже существует")
 
             await session.commit()
 
@@ -43,7 +43,6 @@ class UserManager:
             token = await self.token_service.create_verification_token(user_data.email.lower())
             logging.info(token)
             await EmailService.send_verification_email(user_data.email.lower(), token)
-            logging.info("send")
 
             return UserReturnData(**user_data.__dict__)
 
