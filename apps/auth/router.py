@@ -1,18 +1,20 @@
 from fastapi import APIRouter, HTTPException
-from apps.auth.schemas import CreateUser, UserReturnData, RegisterUser
-from . import user_manager
+
+from starlette import status
+
+from apps.auth.schemas import CreateUser, RegisterUser
+from . import auth_manager
 from .utils import hash_password
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
-@router.post("/register", response_model=UserReturnData)
+@router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register(user_data: RegisterUser):
     hashed_password = hash_password(user_data.password)
     user = CreateUser(**user_data.__dict__, hashed_password=hashed_password)
 
     try:
-        user = await user_manager.create_user(user)
-        return user
+        await auth_manager.register(user)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
@@ -20,7 +22,7 @@ async def register(user_data: RegisterUser):
 @router.get("/verify-email/{token}")
 async def verify_email(token: str):
     try:
-        await user_manager.verify_email(token)
+        await auth_manager.verify_email(token)
 
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))

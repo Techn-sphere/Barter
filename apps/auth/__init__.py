@@ -1,3 +1,3 @@
-from apps.auth.managers import UserManager
+from apps.auth.managers import AuthManager
 
-user_manager = UserManager()
+auth_manager = AuthManager()
