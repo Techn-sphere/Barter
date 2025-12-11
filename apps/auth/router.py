@@ -29,8 +29,14 @@ async def _create_session(user_id: uuid, response: Response):
     await redis.close()
 
 
+@router.post("/register/send-verify-code")
+async def send_verify_code(email: str):
+    await auth_manager.send_register_code(email)
+
+
 @router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register(
+        code: str,
         user_data: RegisterUser,
         response: Response,
 ):
@@ -38,18 +44,8 @@ async def register(
     user = CreateUser(**user_data.__dict__, hashed_password=hashed_password)
 
     try:
-        user = await auth_manager.register(user)
+        user = await auth_manager.register(user, code)
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
     await _create_session(user.id, response)
-
-@router.get("/verify-email/{token}")
-async def verify_email(token: str):
-    try:
-        await auth_manager.verify_email(token)
-
-    except ValueError as e:
-        raise HTTPException(status_code=400, detail=str(e))
-
-    return {"msg": "Email успешно подтвержден"}

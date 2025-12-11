@@ -13,9 +13,3 @@ async def create_user(session: AsyncSession, user: CreateUser) -> User:
     result = await session.execute(query)
     await session.commit()
     return result.scalar_one()
-
-async def verify_user(session: AsyncSession, email: str) -> User | None:
-    query = update(User).where(User.email == email).values(is_email_verified=True).returning(User)
-    result = await session.execute(query)
-    await session.commit()
-    return result.scalar_one_or_none()

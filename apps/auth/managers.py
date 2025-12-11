@@ -5,8 +5,8 @@ from apps.auth.schemas import CreateUser
 from apps.core_dependency.db_dependency import DBDependency
 from apps.core_dependency.redis_dependency import RedisDependency
 from apps.database.models import User
-from apps.auth.servicies import VerificationTokenService, EmailService
-from apps.auth.crud import create_user, verify_user
+from apps.auth.servicies import VerificationCodeService, EmailService
+from apps.auth.crud import create_user
 
 
 class AuthManager:
@@ -14,42 +14,34 @@ class AuthManager:
         self.model = User
         self.db = db
         self.redis = redis
-        self.token_service = None
+        self.code_service = None
 
-    async def create_token_service(self):
-        if self.token_service is None:
+    async def create_code_service(self):
+        if self.code_service is None:
             redis = await self.redis.client()
-            self.token_service = VerificationTokenService(redis)
+            self.code_service = VerificationCodeService(redis)
 
-    async def register(self, user: CreateUser):
-        await self.create_token_service()
+    async def send_register_code(self, email: str):
+        await self.create_code_service()
+
+        code = await self.code_service.create_register_verification_code(email)
+        await EmailService.send_register_verification_email(email, code)
+
+
+    async def register(self, user: CreateUser, code: str) -> User:
+        await self.create_code_service()
+
+        is_valid_code = await self.code_service.verify_register_code(user.email, code)
+        if not is_valid_code:
+            raise ValueError("Недействительный код подтверждения")
 
         db_session = await self.db.get_session()
         async with db_session as session:
             try:
                 user_data = await create_user(session, user)
+                return user_data
             except IntegrityError:
                 raise ValueError("Пользователь уже существует")
 
-            token = await self.token_service.create_verification_token(user_data.email)
-            await EmailService.send_verification_email(user_data.email, token)
-
-            return user_data
-
-
-    async def verify_email(self, token: str):
-        await self.create_token_service()
-
-        db_session = await self.db.get_session()
-        async with db_session as session:
-            email = await self.token_service.verify_token(token)
-            if not email:
-                raise ValueError("Ссылка недействительна или просрочена")
-
-            user = await verify_user(session, email)
-            if not user:
-                raise ValueError("Пользователь не найден")
-
-            await session.commit()
-
-            await self.token_service.delete_verification_token(token)
+            finally:
+                await self.code_service.delete_register_verification_code(user.email)

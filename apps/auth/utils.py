@@ -1,3 +1,4 @@
+import string
 import uuid
 from datetime import timedelta, datetime, timezone
 from passlib.context import CryptContext
@@ -7,6 +8,9 @@ import secrets
 from apps.core.settings import settings
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+def create_verification_code(length=6) -> str:
+    return "".join(secrets.choice(string.digits) for _ in range(length))
 
 def hash_password(password):
     return pwd_context.hash(password)
