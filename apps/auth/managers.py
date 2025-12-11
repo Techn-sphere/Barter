@@ -34,6 +34,8 @@ class AuthManager:
             token = await self.token_service.create_verification_token(user_data.email)
             await EmailService.send_verification_email(user_data.email, token)
 
+            return user_data
+
 
     async def verify_email(self, token: str):
         await self.create_token_service()
