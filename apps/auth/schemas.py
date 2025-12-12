@@ -16,5 +16,9 @@ class RegisterUser(GetUserByEmail):
     password: Annotated[str, StringConstraints(min_length=8, max_length=128)]
 
 
+class LoginUser(GetUserByEmail):
+    password: Annotated[str, StringConstraints(min_length=8, max_length=128)]
+
+
 class CreateUser(GetUserByEmail):
     hashed_password: str

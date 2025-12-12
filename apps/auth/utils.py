@@ -15,6 +15,9 @@ def create_verification_code(length=6) -> str:
 def hash_password(password):
     return pwd_context.hash(password)
 
+def verify_password(plain_password, hashed_password):
+    return pwd_context.verify(plain_password, hashed_password)
+
 def create_access_token(user_id: str) -> str:
     expires = datetime.now(tz=timezone.utc).replace(tzinfo=None) + timedelta(seconds=20)
     return jwt.encode(

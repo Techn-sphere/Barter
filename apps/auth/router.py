@@ -1,10 +1,11 @@
 from fastapi import APIRouter, HTTPException, Response, Depends
+from fastapi.params import Cookie
 from starlette import status
 import uuid
 
 from apps.core_dependency.redis_dependency import RedisDependency
 from apps.core.settings import settings
-from apps.auth.schemas import CreateUser, RegisterUser
+from apps.auth.schemas import CreateUser, RegisterUser, LoginUser
 from .utils import hash_password, create_refresh_token
 from . import auth_manager
 
@@ -30,8 +31,11 @@ async def _create_session(user_id: uuid, response: Response):
 
 
 @router.post("/register/send-verify-code")
-async def send_verify_code(email: str):
-    await auth_manager.send_register_code(email)
+async def send_register_verify_code(email: str):
+    try:
+        await auth_manager.send_register_code(email)
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
@@ -45,7 +49,47 @@ async def register(
 
     try:
         user = await auth_manager.register(user, code)
+        await _create_session(user.id, response)
     except Exception as e:
-        raise HTTPException(status_code=400, detail=str(e))
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.post("/login/send-verify-code")
+async def send_login_verify_code(email: str):
+    try:
+        await auth_manager.send_login_code(email)
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
+@router.post("/login")
+async def login(
+        code: str,
+        credentials: LoginUser,
+        response: Response,
+):
+
+    try:
+        user = await auth_manager.authenticate_user(credentials, code)
+
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+    if not user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Неверные логин или пароль.")
 
     await _create_session(user.id, response)
+
+
+
+@router.post("/logout")
+async def logout(
+        refresh_token: str | None = Cookie(None, alias="refresh_token"),
+        redis = Depends(RedisDependency().client)
+):
+    if refresh_token:
+        await redis.delete(f"refresh:{refresh_token}")
+
+    response = Response(content='{"msg":"logged out"}', media_type="application/json")
+    response.delete_cookie("refresh_token", path="/")
+    return response
