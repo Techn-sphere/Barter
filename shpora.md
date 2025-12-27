@@ -26,3 +26,10 @@ docker exec -it my-redis redis-cli
 Если вы хотите сохранить данные между перезапусками контейнера, важно прикрепить том (volume) или указать путь для хранения данных. Например: docker run --name my-redis -p 6379:6379 -v /my/redis/data:/data -d redis. Так Redis будет сохранять файлы базы данных в папке /my/redis/data вашей локальной машины.
 
 Подробнее: https://www.securitylab.ru/blog/personal/Neurosinaps/355199.php?ysclid=min74bpweh630701045
+
+Ребят, переиспользовать контейнер не получится. Только пересоздать:
+
+docker stop redis
+docker rm redis
+docker run --name my-redis -p 6379:6379 -d redis
+docker ps
