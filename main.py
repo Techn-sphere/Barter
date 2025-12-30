@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from apps.core_dependency.redis_dependency import RedisDependency
 from contextlib import asynccontextmanager
 
+from apps.middleware.auth import SlidingTokenMiddleware
 from apps.auth.router import router as auth_router
 
 redis_dependency = RedisDependency()
@@ -14,6 +15,9 @@ async def lifespan(app: FastAPI):
     await redis_dependency.close()
 
 app = FastAPI(lifespan=lifespan)
+
+app.add_middleware(SlidingTokenMiddleware)
+
 app.include_router(auth_router)
 
 logging.basicConfig(level=logging.DEBUG)
