@@ -6,8 +6,7 @@ from apps.database.models import User
 
 async def create_user(session: AsyncSession, user: CreateUser) -> User:
     query = insert(User).values(
-        email=user.email.__str__().lower(),
-        hashed_password=user.hashed_password,
+        **user.__dict__
     ).returning(User)
 
     result = await session.execute(query)
