@@ -11,11 +11,16 @@ from . import auth_manager
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
+
 async def _create_session(user_id: uuid, response: Response):
     redis = await RedisDependency().client()
 
     refresh_token = create_refresh_token()
-    await redis.setex(f"refresh:{refresh_token}", settings.refresh_token_expire_days * 86400, str(user_id))
+    await redis.setex(
+        f"refresh:{refresh_token}",
+        settings.refresh_token_expire_days * 86400,
+        str(user_id),
+    )
 
     response.set_cookie(
         key="refresh_token",
@@ -24,7 +29,7 @@ async def _create_session(user_id: uuid, response: Response):
         secure=False,
         samesite="lax",
         max_age=settings.refresh_token_expire_days * 86400,
-        path="/"
+        path="/",
     )
 
     await redis.close()
@@ -40,9 +45,9 @@ async def send_register_verify_code(email: str):
 
 @router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register(
-        code: str,
-        user_data: RegisterUser,
-        response: Response,
+    code: str,
+    user_data: RegisterUser,
+    response: Response,
 ):
     hashed_password = hash_password(user_data.password)
     user = CreateUser(**user_data.__dict__, hashed_password=hashed_password)
@@ -64,11 +69,10 @@ async def send_login_verify_code(email: str):
 
 @router.post("/login")
 async def login(
-        code: str,
-        credentials: LoginUser,
-        response: Response,
+    code: str,
+    credentials: LoginUser,
+    response: Response,
 ):
-
     try:
         user = await auth_manager.authenticate_user(credentials, code)
 
@@ -76,16 +80,18 @@ async def login(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
     if not user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Неверные логин или пароль.")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Неверные логин или пароль.",
+        )
 
     await _create_session(user.id, response)
 
 
-
 @router.post("/logout")
 async def logout(
-        refresh_token: str | None = Cookie(None, alias="refresh_token"),
-        redis = Depends(RedisDependency().client)
+    refresh_token: str | None = Cookie(None, alias="refresh_token"),
+    redis=Depends(RedisDependency().client),
 ):
     if refresh_token:
         await redis.delete(f"refresh:{refresh_token}")

@@ -11,7 +11,9 @@ from apps.auth.utils import hash_password, verify_password
 
 
 class AuthManager:
-    def __init__(self, redis: Redis = RedisDependency(), db: DBDependency = DBDependency()) -> None:
+    def __init__(
+        self, redis: Redis = RedisDependency(), db: DBDependency = DBDependency()
+    ) -> None:
         self.model = User
         self.db = db
         self.redis = redis
@@ -27,7 +29,6 @@ class AuthManager:
 
         code = await self.code_service.create_register_verification_code(email)
         await EmailService.send_verification_email(email, code)
-
 
     async def register(self, user: CreateUser, code: str) -> User:
         await self.create_code_service()
@@ -48,14 +49,11 @@ class AuthManager:
             finally:
                 await self.code_service.delete_register_verification_code(user.email)
 
-
-
     async def send_login_code(self, email: str):
         await self.create_code_service()
 
         code = await self.code_service.create_login_verification_code(email)
         await EmailService.send_verification_email(email, code)
-
 
     async def authenticate_user(self, credentials: LoginUser, code: str) -> User | None:
         await self.create_code_service()
@@ -77,4 +75,6 @@ class AuthManager:
 
                 return user
             finally:
-                await self.code_service.delete_login_verification_code(credentials.email)
+                await self.code_service.delete_login_verification_code(
+                    credentials.email
+                )

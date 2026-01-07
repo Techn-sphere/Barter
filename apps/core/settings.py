@@ -1,6 +1,7 @@
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+
 class Settings(BaseSettings):
     db_name: str
     db_user: str
@@ -17,13 +18,12 @@ class Settings(BaseSettings):
     refresh_token_expire_days: int = 30
 
     model_config = SettingsConfigDict(
-        env_file=".env",
-        env_file_encoding="utf8",
-        extra="ignore"
+        env_file=".env", env_file_encoding="utf8", extra="ignore"
     )
 
     @property
     def db_url(self):
         return f"postgresql+asyncpg://{self.db_user}:{self.db_password}@{self.db_host}:{self.db_port}/{self.db_name}"
+
 
 settings = Settings()

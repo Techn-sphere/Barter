@@ -4,10 +4,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from apps.auth.schemas import CreateUser
 from apps.database.models import User
 
+
 async def create_user(session: AsyncSession, user: CreateUser) -> User:
-    query = insert(User).values(
-        **user.__dict__
-    ).returning(User)
+    query = insert(User).values(**user.__dict__).returning(User)
 
     result = await session.execute(query)
     await session.commit()

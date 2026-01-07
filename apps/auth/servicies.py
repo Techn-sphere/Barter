@@ -6,20 +6,24 @@ from apps.auth.utils import create_verification_code
 
 resend.api_key = settings.resend_api_key
 
+
 class EmailService:
     """Отправка email писем"""
 
     @staticmethod
     async def send_verification_email(email: str, code: str):
         try:
-            resend.Emails.send({
-                "from": "onboarding@resend.dev",
-                "to": [email],
-                "subject": "Код подтверждения",
-                "html": f"<html>{code}</html>",
-            })
+            resend.Emails.send(
+                {
+                    "from": "onboarding@resend.dev",
+                    "to": [email],
+                    "subject": "Код подтверждения",
+                    "html": f"<html>{code}</html>",
+                }
+            )
         except ValidationError as e:
             raise ValueError("Некорректный email")
+
 
 class VerificationCodeService:
     def __init__(self, redis: Redis):
@@ -40,7 +44,6 @@ class VerificationCodeService:
 
     async def delete_register_verification_code(self, email: str):
         await self.redis.delete(f"register:verify:{email}")
-
 
     async def create_login_verification_code(self, email: str) -> str:
         code = create_verification_code()

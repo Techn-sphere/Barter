@@ -12,7 +12,7 @@ class RedisDependency:
                 settings.redis_url,
                 decode_responses=True,
                 encoding="utf-8",
-                max_connections=20
+                max_connections=20,
             )
         return self._pool
 
@@ -20,7 +20,6 @@ class RedisDependency:
         pool = await self._get_pool()
         redis_client: Redis = Redis(connection_pool=pool)
         return redis_client
-
 
     async def close(self):
         if self._pool is not None:
