@@ -30,17 +30,8 @@ async def _create_session(user_id: uuid, response: Response):
     await redis.close()
 
 
-@router.post("/register/send-verify-code")
-async def send_register_verify_code(email: str):
-    try:
-        await auth_manager.send_register_code(email)
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-
-
 @router.post("/register", status_code=status.HTTP_201_CREATED)
 async def register(
-        code: str,
         user_data: RegisterUser,
         response: Response,
 ):
@@ -48,29 +39,20 @@ async def register(
     user = CreateUser(**user_data.__dict__, hashed_password=hashed_password)
 
     try:
-        user = await auth_manager.register(user, code)
+        user = await auth_manager.register(user)
         await _create_session(user.id, response)
-    except Exception as e:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
-
-
-@router.post("/login/send-verify-code")
-async def send_login_verify_code(email: str):
-    try:
-        await auth_manager.send_login_code(email)
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
 
 
 @router.post("/login")
 async def login(
-        code: str,
         credentials: LoginUser,
         response: Response,
 ):
 
     try:
-        user = await auth_manager.authenticate_user(credentials, code)
+        user = await auth_manager.authenticate_user(credentials)
 
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

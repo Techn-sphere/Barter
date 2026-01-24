@@ -7,6 +7,8 @@ from contextlib import asynccontextmanager
 from apps.middleware.auth import SlidingTokenMiddleware
 from apps.auth.router import router as auth_router
 
+import uvicorn
+
 redis_dependency = RedisDependency()
 
 @asynccontextmanager
@@ -25,3 +27,5 @@ logging.basicConfig(level=logging.DEBUG)
 @app.get("/")
 async def index():
     return {"status": "It's ALIVE!"}
+
+uvicorn.run(app, host="0.0.0.0", port=8000)
